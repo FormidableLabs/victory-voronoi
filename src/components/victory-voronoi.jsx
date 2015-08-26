@@ -1,19 +1,7 @@
 import React from "react";
 import Radium from "radium";
 import d3 from "d3";
-
-/*
-  http://bl.ocks.org/mbostock/4060366
-  http://bl.ocks.org/mbostock/6675193
-  http://bl.ocks.org/mbostock/6909318
-  http://bl.ocks.org/mbostock/3846051
-  http://bl.ocks.org/mbostock/7280327
-  http://bl.ocks.org/mbostock/7608400
-  https://www.jasondavies.com/maps/voronoi/
-  https://www.jasondavies.com/maps/voronoi/airports/
-  http://christophermanning.org/projects/
-    voronoi-diagram-with-force-directed-nodes-and-delaunay-links/
-*/
+import {VictoryAnimation} from "victory-animation";
 
 @Radium
 class VictoryVoronoi extends React.Component {
@@ -21,30 +9,50 @@ class VictoryVoronoi extends React.Component {
     super(props);
     this.state = {};
   }
+  getPathStyles (cell, i) {
+    return {
+      stroke: this.props.pathStyles.stroke(cell, i),
+      fill: this.props.pathStyles.fill(cell, i)
+    }
+  }
+  getCircleStyles (cell, i) {
+    return {
+      stroke: this.props.circleStyles.stroke(cell, i),
+      fill: this.props.circleStyles.fill(cell, i)
+    }
+  }
   drawVoronoi(data) {
     const voronoi = d3.geom.voronoi()
                     .clipExtent([[0, 0], [this.props.svgWidth, this.props.svgHeight]]);
     const newData = voronoi(data);
+    /* circle translate uses data[i] to get centroid from unadulterated data */
     const cells = newData.map((cell, i) => {
+      console.log(cell, i)
       return (
-        <path
-          style={{stroke: "#fff", fill: "rgba(" + i + "," + i + "," + i + "," + 1 + ")" }}
-          d={"M" + cell.join("L") + "Z"} />
-      );
+        <VictoryAnimation data={cell} key={i}>
+          {(data) => {
+            return (
+              <g>
+                <path
+                  style={this.getPathStyles(cell, i)}
+                  d={"M" + cell.join("L") + "Z"} />
+                <circle
+                  style={this.getCircleStyles(cell, i)}
+                  r={this.props.circleRadius}
+                  transform={"translate("+ data[i] +")"}/>
+              </g>
+            );
+          }}
+        </VictoryAnimation>
+      )
     });
     return cells;
-  }
-  getRandomData() {
-    const vertices = d3.range(100).map(() => {
-      return [Math.random() * this.props.svgWidth, Math.random() * this.props.svgHeight];
-    });
-    return vertices;
   }
   render() {
     return (
       <svg height={this.props.svgHeight} width={this.props.svgWidth}>
         <g>
-          {this.drawVoronoi(this.props.data || this.getRandomData())}
+          {this.drawVoronoi(this.props.data)}
         </g>
       </svg>
     );
@@ -55,15 +63,27 @@ VictoryVoronoi.propTypes = {
   svg: React.PropTypes.bool,
   svgWidth: React.PropTypes.number,
   svgHeight: React.PropTypes.number,
-  stroke: React.PropTypes.string,
-  data: React.PropTypes.array
+  styles: React.PropTypes.object,
+  data: React.PropTypes.array,
+  computePathFill: React.PropTypes.func,
+  circleRadius: React.PropTypes.number
 };
 
 VictoryVoronoi.defaultProps = {
   svg: true,
   svgWidth: 960,
   svgHeight: 600,
-  stroke: "#fff"
+  circleStyles: {
+    fill: (cell, i) => { return "#FFF"; },
+    stroke: (cell, i) => { return "none"; }
+  },
+  pathStyles: {
+    fill: (cell, i) => {
+      return "rgba(" + i * 2 + "," + i * 2 + "," + i * 2 + "," + 1 + ")";
+    },
+    stroke: (cell, i) => { return "#eee"; }
+  },
+  circleRadius: 2
 };
 
 export default VictoryVoronoi;
