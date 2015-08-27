@@ -1,13 +1,13 @@
 /*global document:false*/
 import React from "react";
+import _ from "lodash";
 import {VictoryVoronoi} from "../src/index";
 
-function getRandomVoronoiData (width, height) {
-  const vertices = d3.range(100).map(() => {
+const getRandomVoronoiData = function (width, height) {
+  return _.map(_.range(60), () => {
     return [Math.random() * width, Math.random() * height];
   });
-  return vertices;
-}
+};
 
 class App extends React.Component {
   constructor(props) {
@@ -16,17 +16,18 @@ class App extends React.Component {
       svgWidth: 960,
       svgHeight: 600,
       data: getRandomVoronoiData(960, 600)
-    }
+    };
   }
-  componentDidMount() {
-    window.setInterval(() => {
-      this.setState({
-        data: getRandomVoronoiData(960,600)
-      });
-    }, 1700);
-  }
+
+  // componentDidMount() {
+  //   window.setInterval(() => {
+  //     this.setState({
+  //       data: getRandomVoronoiData(960, 600)
+  //     });
+  //   }, 8000);
+  // }
+
   render() {
-    console.log(this.state.data)
     return (
       <VictoryVoronoi
         data={this.state.data}
