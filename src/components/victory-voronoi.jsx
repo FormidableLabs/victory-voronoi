@@ -13,8 +13,9 @@ class VictoryVoronoi extends React.Component {
 
   getPathStyles(cell, i) {
     return {
+      fill: this.props.pathStyles.fill(cell, i),
       stroke: this.props.pathStyles.stroke(cell, i),
-      fill: this.props.pathStyles.fill(i)
+      strokeWidth: this.props.pathStyles.strokeWidth(cell, i)
     };
   }
 
@@ -26,25 +27,34 @@ class VictoryVoronoi extends React.Component {
   }
 
   drawVoronoi(data) {
-    const voronoiGenerator =
-      d3.geom.voronoi().clipExtent([[0, 0], [this.props.svgWidth, this.props.svgHeight]]);
-    const newData = voronoiGenerator(data);
+    const voronoiGenerator = d3.geom.voronoi()
+      .clipExtent([
+        [this.props.clipExtent.x, this.props.clipExtent.y],
+        [this.props.svgWidth, this.props.svgHeight]
+      ]);
+    const newData = this.props.triangle ?
+      voronoiGenerator.triangles(data) : voronoiGenerator(data);
 
     return _.map(newData, (cell, i) => {
       return (
-        <VictoryAnimation data={_.toPlainObject(cell)} key={i}>
+        <VictoryAnimation data={_.toPlainObject(cell)} key={i} velocity={this.props.velocity}>
           {(voronoi) => {
             // remove voronoi centroid coordinates to create array of vertices only
-            const vertices = _.toArray(voronoi).slice(0, -1);
+            const vertices =
+              this.props.triangle ? _.toArray(voronoi) : _.toArray(voronoi).slice(0, -1);
+
             return (
-              <g>
+              <g key={i}>
                 <path
                   style={this.getPathStyles(vertices, i)}
                   d={"M" + vertices.join("L") + "Z"}/>
-                <circle
-                  style={this.getCircleStyles(vertices, i)}
-                  r={this.props.circleRadius}
-                  transform={"translate(" + voronoi.point + ")"}/>
+                {this.props.triangle ? null : (
+                  <circle
+                    style={this.getCircleStyles(vertices, i)}
+                    r={this.props.circleRadius}
+                    transform={"translate(" + voronoi.point[0] + "," + voronoi.point[1] + ")"}/>
+                  )
+                }
               </g>
             );
           }}
@@ -67,28 +77,34 @@ class VictoryVoronoi extends React.Component {
 VictoryVoronoi.propTypes = {
   circleRadius: React.PropTypes.number,
   circleStyles: React.PropTypes.object,
+  clipExtent: React.PropTypes.object,
   computePathFill: React.PropTypes.func,
   data: React.PropTypes.array,
   pathStyles: React.PropTypes.object,
-  styles: React.PropTypes.object,
   svg: React.PropTypes.bool,
   svgHeight: React.PropTypes.number,
-  svgWidth: React.PropTypes.number
+  svgWidth: React.PropTypes.number,
+  triangle: React.PropTypes.bool,
+  velocity: React.PropTypes.number
 };
 
 VictoryVoronoi.defaultProps = {
-  svg: true,
-  svgWidth: 960,
-  svgHeight: 600,
+  circleRadius: 2,
   circleStyles: {
     fill: () => { return "#FFF"; },
     stroke: () => { return "none"; }
   },
+  clipExtent: { x: 0, y: 0 },
   pathStyles: {
     fill: (i) => { return "rgba(" + i * 2 + "," + i * 2 + "," + i * 2 + "," + 1 + ")"; },
-    stroke: () => { return "#eee"; }
+    stroke: () => { return "#eee"; },
+    strokeWidth: () => { return 1; }
   },
-  circleRadius: 2
+  svg: true,
+  svgHeight: 600,
+  svgWidth: 960,
+  triangle: false,
+  velocity: 0.02
 };
 
 export default VictoryVoronoi;
