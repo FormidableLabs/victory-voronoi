@@ -3,7 +3,7 @@ import React from "react";
 import _ from "lodash";
 import {VictoryVoronoi} from "../src/index";
 
-const n = 50;
+const n = 10;
 
 class App extends React.Component {
   constructor(props) {

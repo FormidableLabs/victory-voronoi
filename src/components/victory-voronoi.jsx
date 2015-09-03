@@ -9,6 +9,22 @@ class VictoryVoronoi extends React.Component {
   constructor(props) {
     super(props);
     this.state = {};
+    this.voronoiGenerator = d3.geom.voronoi()
+      .clipExtent([
+        [this.props.clipExtent.x, this.props.clipExtent.y],
+        [this.props.svgWidth, this.props.svgHeight]
+      ]);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const oldData = this.voronoiGenerator(this.props.data);
+    const newData = this.voronoiGenerator(nextProps.data);
+    _.each(oldData, (voronoi, index) => {
+      if (voronoi.length !== newData[index].length) {
+        console.log(voronoi.length);
+        console.log(newData[index].length);
+      }
+    });
   }
 
   getPathStyles(cell, i) {
@@ -27,13 +43,8 @@ class VictoryVoronoi extends React.Component {
   }
 
   drawVoronoi(data) {
-    const voronoiGenerator = d3.geom.voronoi()
-      .clipExtent([
-        [this.props.clipExtent.x, this.props.clipExtent.y],
-        [this.props.svgWidth, this.props.svgHeight]
-      ]);
     const newData = this.props.triangle ?
-      voronoiGenerator.triangles(data) : voronoiGenerator(data);
+      this.voronoiGenerator.triangles(data) : this.voronoiGenerator(data);
 
     return _.map(newData, (cell, i) => {
       return (
