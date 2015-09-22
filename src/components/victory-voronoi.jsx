@@ -97,7 +97,7 @@ class VictoryVoronoi extends React.Component {
   render() {
     return (
       <svg
-        style={{ backgroundColor: this.props.backgroundColor }}
+        style={this.props.svgStyles}
         height={this.props.svgHeight}
         width={this.props.svgWidth}>
         <g>
@@ -109,7 +109,6 @@ class VictoryVoronoi extends React.Component {
 }
 
 VictoryVoronoi.propTypes = {
-  backgroundColor: React.PropTypes.string,
   circleRadius: React.PropTypes.number,
   circleStyles: React.PropTypes.object,
   clipExtent: React.PropTypes.object,
@@ -121,16 +120,16 @@ VictoryVoronoi.propTypes = {
   pathStyles: React.PropTypes.object,
   svg: React.PropTypes.bool,
   svgHeight: React.PropTypes.number,
+  svgStyles: React.PropTypes.object,
   svgWidth: React.PropTypes.number,
   triangle: React.PropTypes.bool,
   velocity: React.PropTypes.number
 };
 
 VictoryVoronoi.defaultProps = {
-  backgroundColor: "#FFF",
   circleRadius: 2,
   circleStyles: {
-    fill: () => { return "#FFF"; },
+    fill: () => { return "#ffffff"; },
     stroke: () => { return "none"; }
   },
   clipExtent: { x: 0, y: 0 },
