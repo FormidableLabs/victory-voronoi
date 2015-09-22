@@ -1,17 +1,18 @@
-/*global document:false*/
+/*global document:false window:false*/
 import React from "react";
 import _ from "lodash";
 import {VictoryVoronoi} from "../src/index";
 
-const n = 10;
+const n = 40;
+const svgWidth = 1200;
+const svgHeight = 430;
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      svgWidth: 1200,
-      svgHeight: 430,
-      data: this.getRandomVoronoiData(1200, 430)
+      data: this.getRandomVoronoiData(),
+      fixedPoints: this.getFixedPoints()
     };
   }
 
@@ -24,41 +25,64 @@ class App extends React.Component {
     }, 100);
   }
 
-  getRandomVoronoiData(width, height) {
-    const particles = _.range(n);
+  getRandomVoronoiData() {
+    const points = _.range(n);
 
     for (let i = 0; i < n; ++i) {
-      particles[i] = {
-        0: Math.random() * width,
-        1: Math.random() * height,
-        vx: 0,
-        vy: 0
+      points[i] = {
+        0: Math.floor(Math.random() * svgWidth),
+        1: Math.floor(Math.random() * svgHeight),
+        vx: Math.floor(Math.random() * 2) * 2 - 1,
+        vy: Math.floor(Math.random() * 2) * 2 - 1
       };
     }
 
-    return particles;
+    return points;
   }
 
   tweakData() {
-    let data = this.state.data;
-    for (let i = 0; i < n; ++i) {
-      let p = this.state.data[i];
-      p[0] += p.vx; if (p[0] < 0) p[0] = p.vx *= -1; else if (p[0] > this.state.width) p[0] = this.state.width + (p.vx *= -1);
-      p[1] += p.vy; if (p[1] < 0) p[1] = p.vy *= -1; else if (p[1] > this.state.height) p[1] = this.state.height + (p.vy *= -1);
-      p.vx += 0.1 * (Math.random() - 0.5) - 0.01 * p.vx;
-      p.vy += 0.1 * (Math.random() - 0.5) - 0.01 * p.vy;
-      data[i] = p;
+    const data = this.state.data;
+
+    for (let i = 0; i < n; i++) {
+      const point = data[i];
+
+      if (point[0] <= 0 || point[0] >= svgWidth) {
+        point.vx *= -1;
+      }
+      if (point[1] <= 0 || point[1] >= svgHeight) {
+        point.vy *= -1;
+      }
+
+      point[0] += point.vx / 6;
+      point[1] += point.vy / 6;
     }
+
     return data;
+  }
+
+  getFixedPoints() {
+    const topPoints = _.map(_.range(1, 4), (k) => {
+      return {0: (svgWidth / 4) * k, 1: 0};
+    });
+    const bottomPoints = _.map(_.range(1, 4), (m) => {
+      return { 0: (svgWidth / 4) * m, 1: svgHeight };
+    });
+    const leftPoints = [{ 0: 0, 1: svgHeight / 2 }];
+    const rightPoints = [{ 0: svgWidth, 1: svgHeight / 2 }];
+
+    return topPoints.concat(bottomPoints).concat(leftPoints).concat(rightPoints);
   }
 
   render() {
     return (
       <VictoryVoronoi
+        backgroundColor="#ccc"
         data={this.state.data}
-        svgWidth={this.state.svgWidth}
-        svgHeight={this.state.svgHeight}
-        velocity={5}
+        fixedPoints={this.state.fixedPoints}
+        hideCentroids={true}
+        svgWidth={svgWidth}
+        svgHeight={svgHeight}
+        velocity={10}
         pathStyles={{
           fill: () => { return "#ccc"; },
           stroke: () => { return "#f5f5f5"; },

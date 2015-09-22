@@ -16,17 +16,6 @@ class VictoryVoronoi extends React.Component {
       ]);
   }
 
-  componentWillReceiveProps(nextProps) {
-    const oldData = this.voronoiGenerator(this.props.data);
-    const newData = this.voronoiGenerator(nextProps.data);
-    _.each(oldData, (voronoi, index) => {
-      if (voronoi.length !== newData[index].length) {
-        console.log(voronoi.length);
-        console.log(newData[index].length);
-      }
-    });
-  }
-
   getPathStyles(cell, i) {
     return {
       fill: this.props.pathStyles.fill(cell, i),
@@ -42,24 +31,55 @@ class VictoryVoronoi extends React.Component {
     };
   }
 
+  addTrianglePoints(data) {
+    if (this.props.corners) {
+      data.push(
+        {0: 0, 1: 0},
+        {0: 0, 1: this.props.svgHeight},
+        {0: this.props.svgWidth, 1: 0},
+        {0: this.props.svgWidth, 1: this.props.svgHeight}
+      );
+    }
+    if (this.props.fixedPoints) {
+      data = data.concat(this.props.fixedPoints);
+    }
+    return data;
+  }
+
   drawVoronoi(data) {
-    const newData = this.props.triangle ?
-      this.voronoiGenerator.triangles(data) : this.voronoiGenerator(data);
+    const isTriangle = this.props.triangle;
+    let dataClone = _.clone(data);
+    let newData;
+
+    if (isTriangle) {
+      dataClone = this.addTrianglePoints(dataClone);
+      newData = this.voronoiGenerator.triangles(dataClone);
+    } else {
+      newData = this.voronoiGenerator(dataClone);
+    }
 
     return _.map(newData, (cell, i) => {
-      return (
-        <VictoryAnimation data={_.toPlainObject(cell)} key={i} velocity={this.props.velocity}>
-          {(voronoi) => {
-            // remove voronoi centroid coordinates to create array of vertices only
-            const vertices =
-              this.props.triangle ? _.toArray(voronoi) : _.toArray(voronoi).slice(0, -1);
+      const vertices = [];
 
+      for (let j = 0; j < cell.length; j++) {
+        if (isTriangle) {
+          vertices.push([cell[j][0], cell[j][1]]);
+        } else {
+          vertices.push(cell[j]);
+        }
+      }
+
+      const path = "M" + vertices.join("L") + "Z";
+
+      return (
+        <VictoryAnimation data={{ path, point: cell.point }} key={i} velocity={this.props.velocity}>
+          {(voronoi) => {
             return (
               <g key={i}>
                 <path
                   style={this.getPathStyles(vertices, i)}
-                  d={"M" + vertices.join("L") + "Z"}/>
-                {this.props.triangle ? null : (
+                  d={voronoi.path}/>
+                {isTriangle || this.props.hideCentroids ? null : (
                   <circle
                     style={this.getCircleStyles(vertices, i)}
                     r={this.props.circleRadius}
@@ -76,7 +96,10 @@ class VictoryVoronoi extends React.Component {
 
   render() {
     return (
-      <svg height={this.props.svgHeight} width={this.props.svgWidth}>
+      <svg
+        style={{ backgroundColor: this.props.backgroundColor }}
+        height={this.props.svgHeight}
+        width={this.props.svgWidth}>
         <g>
           {this.drawVoronoi(this.props.data)}
         </g>
@@ -86,11 +109,15 @@ class VictoryVoronoi extends React.Component {
 }
 
 VictoryVoronoi.propTypes = {
+  backgroundColor: React.PropTypes.string,
   circleRadius: React.PropTypes.number,
   circleStyles: React.PropTypes.object,
   clipExtent: React.PropTypes.object,
   computePathFill: React.PropTypes.func,
+  corners: React.PropTypes.bool,
   data: React.PropTypes.array,
+  fixedPoints: React.PropTypes.arrayOf(React.PropTypes.object),
+  hideCentroids: React.PropTypes.bool,
   pathStyles: React.PropTypes.object,
   svg: React.PropTypes.bool,
   svgHeight: React.PropTypes.number,
@@ -100,12 +127,15 @@ VictoryVoronoi.propTypes = {
 };
 
 VictoryVoronoi.defaultProps = {
+  backgroundColor: "#FFF",
   circleRadius: 2,
   circleStyles: {
     fill: () => { return "#FFF"; },
     stroke: () => { return "none"; }
   },
   clipExtent: { x: 0, y: 0 },
+  corners: true,
+  hideCentroids: false,
   pathStyles: {
     fill: (i) => { return "rgba(" + i * 2 + "," + i * 2 + "," + i * 2 + "," + 1 + ")"; },
     stroke: () => { return "#eee"; },
@@ -115,7 +145,7 @@ VictoryVoronoi.defaultProps = {
   svgHeight: 600,
   svgWidth: 960,
   triangle: false,
-  velocity: 0.02
+  velocity: 10
 };
 
 export default VictoryVoronoi;
