@@ -71,26 +71,28 @@ class VictoryVoronoi extends React.Component {
 
       const path = "M" + vertices.join("L") + "Z";
 
-      return (
+      const _buildSvg = voronoi => {
+        return (
+          <g key={i}>
+            <path
+              style={this.getPathStyles(vertices, i)}
+              d={voronoi.path}/>
+            {isTriangle || this.props.hideCentroids ? null : (
+              <circle
+                style={this.getCircleStyles(vertices, i)}
+                r={this.props.circleRadius}
+                transform={"translate(" + voronoi.point[0] + "," + voronoi.point[1] + ")"}/>
+              )
+            }
+          </g>
+        );
+      };
+
+      return this.props.animate ? (
         <VictoryAnimation data={{ path, point: cell.point }} key={i} velocity={this.props.velocity}>
-          {(voronoi) => {
-            return (
-              <g key={i}>
-                <path
-                  style={this.getPathStyles(vertices, i)}
-                  d={voronoi.path}/>
-                {isTriangle || this.props.hideCentroids ? null : (
-                  <circle
-                    style={this.getCircleStyles(vertices, i)}
-                    r={this.props.circleRadius}
-                    transform={"translate(" + voronoi.point[0] + "," + voronoi.point[1] + ")"}/>
-                  )
-                }
-              </g>
-            );
-          }}
+          {_buildSvg}
         </VictoryAnimation>
-      );
+      ) : _buildSvg({ path, point: cell.point });
     });
   }
 
@@ -123,7 +125,8 @@ VictoryVoronoi.propTypes = {
   svgStyles: React.PropTypes.object,
   svgWidth: React.PropTypes.number,
   triangle: React.PropTypes.bool,
-  velocity: React.PropTypes.number
+  velocity: React.PropTypes.number,
+  animate: React.PropTypes.bool
 };
 
 VictoryVoronoi.defaultProps = {
@@ -144,7 +147,8 @@ VictoryVoronoi.defaultProps = {
   svgHeight: 600,
   svgWidth: 960,
   triangle: false,
-  velocity: 10
+  velocity: 10,
+  animate: true
 };
 
 export default VictoryVoronoi;
