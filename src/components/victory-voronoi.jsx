@@ -1,10 +1,8 @@
 import React from "react";
-import Radium from "radium";
 import d3 from "d3";
 import _ from "lodash";
-import {VictoryAnimation} from "victory-animation";
+import { VictoryAnimation } from "victory-core";
 
-@Radium
 class VictoryVoronoi extends React.Component {
   constructor(props) {
     super(props);
